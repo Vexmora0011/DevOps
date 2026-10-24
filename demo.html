@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vulnerable AppSec Lab</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 32px 16px;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #172033;
+    }
+
+    main {
+      max-width: 680px;
+      margin: auto;
+    }
+
+    .card {
+      margin: 20px 0;
+      padding: 22px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px #0000000d;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px;
+      margin-top: 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-top: 16px;
+      padding: 11px 16px;
+      border: 0;
+      border-radius: 6px;
+      background: #1d4ed8;
+      color: white;
+      cursor: pointer;
+    }
+
+    .output {
+      margin-top: 16px;
+      padding: 12px;
+      overflow-wrap: anywhere;
+      background: #f8fafc;
+      border-radius: 6px;
+      min-height: 20px;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .warning {
+      color: #b91c1c;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>AppSec Vulnerability Lab</h1>
+    <p>Local security training application</p>
+    <p class="warning">
+      Intentionally vulnerable. Use fake data only.
+    </p>
+
+    <section class="card">
+      <h2>1. Demo Login</h2>
+
+      <form id="loginForm">
+        <label for="username">Username</label>
+        <input id="username" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password" required>
+
+        <button type="submit">Login</button>
+      </form>
+
+      <div id="loginResult" class="output"></div>
+    </section>
+
+    <section class="card">
+      <h2>2. Profile Preview — DOM XSS</h2>
+
+      <label for="profileName">Display name</label>
+      <input
+        id="profileName"
+        placeholder="Enter a name or HTML payload"
+      >
+
+      <button id="previewBtn" type="button">
+        Preview
+      </button>
+
+      <div id="preview" class="output"></div>
+    </section>
+
+    <section class="card">
+      <h2>3. Exposed Demo Secrets</h2>
+
+      <p>
+        These fictional values are deliberately embedded in
+        frontend JavaScript.
+      </p>
+
+      <button id="showConfig" type="button">
+        Show configuration
+      </button>
+
+      <pre id="configOutput" class="output"></pre>
+    </section>
+  </main>
+
+  <script>
+    /*
+     * INTENTIONALLY VULNERABLE TRAINING CODE
+     * All values are fake placeholders.
+     * Never put real credentials in frontend JavaScript.
+     */
+
+    const DEMO_SECRETS = {
+      apiKey: "sk-demo-NOT-A-REAL-KEY-123456",
+      awsAccessKeyId: "AKIADEMO123456789XYZ",
+      awsSecretAccessKey: "demo-only-fake-secret",
+      databasePassword: "training-db-password",
+      jwtSigningSecret: "demo-jwt-secret",
+      adminPassword: "AdminDemo123!"
+    };
+
+    // VULNERABILITY 1:
+    // Authentication is entirely client-side and can be modified.
+    document
+      .getElementById("loginForm")
+      .addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const username =
+          document.getElementById("username").value;
+
+        const password =
+          document.getElementById("password").value;
+
+        const result =
+          document.getElementById("loginResult");
+
+        if (
+          username === "admin" &&
+          password === DEMO_SECRETS.adminPassword
+        ) {
+          result.textContent = "Demo admin login successful.";
+        } else {
+          result.textContent = "Invalid credentials.";
+        }
+      });
+
+    // VULNERABILITY 2:
+    // Untrusted input is interpreted as HTML.
+    document
+      .getElementById("previewBtn")
+      .addEventListener("click", function () {
+        const name =
+          document.getElementById("profileName").value;
+
+        document.getElementById("preview").innerHTML = name;
+      });
+
+    // VULNERABILITY 3:
+    // Sensitive-looking values are bundled with client code.
+    document
+      .getElementById("showConfig")
+      .addEventListener("click", function () {
+        document.getElementById("configOutput").textContent =
+          JSON.stringify(DEMO_SECRETS, null, 2);
+      });
+  </script>
+</body>
+</html>
